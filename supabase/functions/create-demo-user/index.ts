@@ -6,28 +6,16 @@ Deno.serve(async () => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // Check if demo user already exists
-  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-  const demoUser = existingUsers?.users?.find(u => u.email === "demo@corekonstruct.com");
-  
-  if (demoUser) {
-    return new Response(JSON.stringify({ message: "Demo user already exists", id: demoUser.id }), {
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email: "demo@corekonstruct.com",
-    password: "demo1234",
-    email_confirm: true,
-    user_metadata: { full_name: "Demo User", role: "admin" },
-  });
+  const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+    "ee01d32a-f64a-4fb8-a882-5f0c078764aa",
+    { email_confirm: true, password: "demo1234" }
+  );
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { "Content-Type": "application/json" } });
   }
 
-  return new Response(JSON.stringify({ message: "Demo user created", id: data.user.id }), {
+  return new Response(JSON.stringify({ message: "Demo user confirmed", confirmed: data.user.email_confirmed_at }), {
     headers: { "Content-Type": "application/json" },
   });
 });
