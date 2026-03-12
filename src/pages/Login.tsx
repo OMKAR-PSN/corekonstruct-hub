@@ -60,6 +60,28 @@ const Login = () => {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                const { error } = await supabase.auth.signInWithPassword({
+                  email: "demo@corekonstruct.com",
+                  password: "demo1234",
+                });
+                setLoading(false);
+                if (error) {
+                  toast.error("Demo account not available. Please contact admin.");
+                } else {
+                  toast.success("Welcome to the demo!");
+                  navigate("/dashboard");
+                }
+              }}
+            >
+              🚀 Enter Demo
+            </Button>
           </form>
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
