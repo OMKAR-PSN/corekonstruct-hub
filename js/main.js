@@ -1,0 +1,1 @@
+/* Core Konstruct JS folder */
