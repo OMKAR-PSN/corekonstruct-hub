@@ -1,1 +1,1 @@
-/* Core Konstruct JS folder */
+/* Core Konstruct - Landing Page JS */
