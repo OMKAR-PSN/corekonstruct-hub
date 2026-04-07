@@ -48,9 +48,21 @@
         <span class="nav-icon">💰</span><span class="nav-label">Finance</span>
       </button>
 
+      <div class="nav-section-label" style="margin-top:16px;">Tools</div>
+      <button class="nav-item" data-nav="sanction" onclick="switchPanel('sanction')">
+        <span class="nav-icon">📜</span><span class="nav-label">Sanction Plan</span>
+      </button>
+
+      <a href="tenders.html" class="nav-item" data-nav="tenders">
+        <span class="nav-icon">🏗</span><span class="nav-label">Workload/Tenders</span>
+      </a>
+
       <div class="nav-section-label" style="margin-top:16px;">More</div>
       <a href="index.html" class="nav-item">
         <span class="nav-icon">🌐</span><span class="nav-label">Public Site</span>
+      </a>
+      <a href="brochures.html" class="nav-item">
+        <span class="nav-icon">📄</span><span class="nav-label">Brochures</span>
       </a>
       <a href="blog.html" class="nav-item">
         <span class="nav-icon">📝</span><span class="nav-label">Blog</span>
@@ -228,7 +240,69 @@
         </div>
       </div>
 
-    </main>
+      <!-- ══════ SANCTION PLAN PANEL ══════ -->
+      <div class="dash-panel-section hidden" id="panel-sanction">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.3rem;margin:0;">Sanction Plan</h2>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">Manage government approvals, NOCs, and sanctioned project documents</div>
+          </div>
+          <button class="btn-primary" onclick="openSanctionModal()">+ Add Document</button>
+        </div>
+
+        <!-- Status summary -->
+        <div class="stats-grid" style="margin-bottom:24px;">
+          <div class="stat-card orange">
+            <div class="stat-icon orange">📜</div>
+            <div class="stat-body">
+              <div class="val" id="sanction-total">6</div>
+              <div class="lbl">Total Documents</div>
+            </div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-icon success">✅</div>
+            <div class="stat-body">
+              <div class="val" id="sanction-approved">4</div>
+              <div class="lbl">Approved</div>
+            </div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-icon warning">⏳</div>
+            <div class="stat-body">
+              <div class="val" id="sanction-pending">1</div>
+              <div class="lbl">Pending</div>
+            </div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-icon danger">⚠</div>
+            <div class="stat-body">
+              <div class="val" id="sanction-expiring">1</div>
+              <div class="lbl">Expiring Soon</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents table -->
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <h3>📁 Sanction Documents</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <select id="sanction-filter" onchange="filterSanctionDocs()" style="border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:0.82rem;background:var(--white);color:var(--navy);">
+                <option value="all">All Status</option>
+                <option value="approved">✅ Approved</option>
+                <option value="pending">⏳ Pending</option>
+                <option value="expiring">⚠ Expiring</option>
+              </select>
+            </div>
+          </div>
+          <div class="dash-panel-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>Document</th><th>Project</th><th>Authority</th><th>Date Issued</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="sanction-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
   </div>
 </div>
 
@@ -349,12 +423,60 @@
         <input type="number" id="proj-budget" name="proj-budget" placeholder="e.g. 5000000" required min="0">
       </div>
       <div class="form-group">
-        <label>Assigned Supervisor</label>
-        <select>
-          <option>Arjun Singh</option>
+        <label for="proj-supervisor">Assigned Supervisor *</label>
+        <select id="proj-supervisor" name="proj-supervisor" required>
+          <option value="">Select Supervisor</option>
+          <option value="Arjun Singh">Arjun Singh</option>
+          <option value="Meera Nair">Meera Nair</option>
+          <option value="Suresh Pillai">Suresh Pillai</option>
+          <option value="Deepa Sharma">Deepa Sharma</option>
         </select>
       </div>
       <button type="submit" class="btn-primary w-100">Create Project →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ════ ADD SANCTION DOCUMENT MODAL ════ -->
+<div class="modal-overlay hidden" id="sanction-modal" onclick="if(event.target===this)closeSanctionModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeSanctionModal()">✕</button>
+    <h3 style="margin-bottom:24px;">📁 Add Sanction Document</h3>
+    <form id="add-sanction-form">
+      <div class="form-group">
+        <label for="sanc-name">Document Name *</label>
+        <input type="text" id="sanc-name" name="sanc-name" placeholder="e.g. Environmental Clearance NOC" required>
+      </div>
+      <div class="form-group">
+        <label for="sanc-project">Related Project *</label>
+        <select id="sanc-project" name="sanc-project" required>
+          <option value="">Select Project</option>
+          <!-- Will be filled dynamically -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="sanc-authority">Issuing Authority</label>
+        <input type="text" id="sanc-authority" name="sanc-authority" placeholder="e.g. MPCB">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label for="sanc-date">Date Issued</label>
+          <input type="date" id="sanc-date" name="sanc-date">
+        </div>
+        <div class="form-group">
+          <label for="sanc-expiry">Expiry Date</label>
+          <input type="date" id="sanc-expiry" name="sanc-expiry">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="sanc-status">Status *</label>
+        <select id="sanc-status" name="sanc-status" required>
+          <option value="approved">✅ Approved</option>
+          <option value="pending">⏳ Pending</option>
+          <option value="expiring">⚠ Expiring</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary w-100">Add Document →</button>
     </form>
   </div>
 </div>
@@ -370,6 +492,8 @@
       id === 'overview' ? 'Dashboard Overview' :
       id === 'projects' ? 'Project Management' :
       id === 'monitoring' ? 'Site Monitoring' :
+      id === 'sanction' ? 'Sanction Plan' :
+      id === 'tenders' ? 'Workload / Tenders' :
       'Finance Overview';
 
     if (id === 'projects') renderProjectCards();

@@ -28,7 +28,12 @@
       </div>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-section-label">Daily Tasks</div>
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item" data-nav="projects" onclick="switchSuperPanel('projects')">
+        <span class="nav-icon">📋</span><span class="nav-label">My Projects</span>
+      </button>
+
+      <div class="nav-section-label" style="margin-top:16px;">Daily Tasks</div>
       <button class="nav-item" data-nav="report" onclick="switchSuperPanel('report')">
         <span class="nav-icon">📝</span><span class="nav-label">Daily Report</span>
       </button>
@@ -73,6 +78,16 @@
     </header>
 
     <main class="dash-content">
+
+      <!-- ══ MY PROJECTS ══ -->
+      <div class="super-panel hidden" id="sp-projects">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <h2 style="font-size:1.3rem;">Assigned Projects</h2>
+        </div>
+        <div class="three-col-grid" id="assigned-projects-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
 
       <!-- ══ DAILY REPORT ══ -->
       <div class="super-panel" id="sp-report">
@@ -295,7 +310,7 @@
   const origSwitch = window.switchSuperPanel;
   window.switchSuperPanel = function(id) {
     origSwitch(id);
-    const titles = { report:'Daily Report', attendance:'Labour Attendance', materials:'Material Log', measurements:'Work Measurements', photos:'Site Photos', progress:'Update Progress' };
+    const titles = { projects:'My Projects', report:'Daily Report', attendance:'Labour Attendance', materials:'Material Log', measurements:'Work Measurements', photos:'Site Photos', progress:'Update Progress' };
     const h2 = document.getElementById('topbar-title');
     if (h2) h2.textContent = titles[id] || 'Dashboard';
   };
