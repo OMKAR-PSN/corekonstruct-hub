@@ -1,184 +1,177 @@
-/* ============================================================
-   CORE KONSTRUCT — auth.js
-   Role-based login, session management, logout
-   ============================================================ */
+/**
+ * CoreKonstruct — Frontend Auth Helper
+ * Handles login form submission, JWT storage, and session checks.
+ */
 
-// Demo credentials
-const USERS = {
-  admin: {
-    email:    'admin@corekonstruct.com',
-    password: 'admin123',
-    name:     'Rajesh Kumar',
-    role:     'Contractor / Admin',
-    initials: 'RK',
-    dashboard:'dashboard-admin.html'
+const API_BASE = '/api';
+
+// ── Token Helpers ─────────────────────────────────────────────────────────
+const Auth = {
+  setToken(token, user) {
+    localStorage.setItem('ck_token', token);
+    localStorage.setItem('ck_user',  JSON.stringify(user));
   },
-  supervisor: {
-    email:    'supervisor@corekonstruct.com',
-    password: 'super123',
-    name:     'Arjun Singh',
-    role:     'Site Supervisor',
-    initials: 'AS',
-    dashboard:'dashboard-supervisor.html'
+  getToken() {
+    return localStorage.getItem('ck_token');
   },
-  client: {
-    email:    'client@corekonstruct.com',
-    password: 'client123',
-    name:     'Priya Mehta',
-    role:     'Client',
-    initials: 'PM',
-    dashboard:'dashboard-client.html'
+  getUser() {
+    try { return JSON.parse(localStorage.getItem('ck_user')); } catch { return null; }
+  },
+  logout() {
+    localStorage.removeItem('ck_token');
+    localStorage.removeItem('ck_user');
+    window.location.href = '/login.html';
+  },
+  isLoggedIn() {
+    return !!this.getToken();
+  },
+  // Attach Bearer token to fetch requests
+  headers() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.getToken()}`
+    };
   }
 };
 
-// ── Login Page Logic ──────────────────────────────────────────
-const loginForm  = document.getElementById('login-form');
-const loginError = document.getElementById('login-error');
-const roleTabBtns = document.querySelectorAll('.role-tab');
-const demoHint   = document.getElementById('demo-hint');
+// ── Login Page Logic ────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
 
-let activeRole = 'admin';
-
-// Set demo hints
-const hints = {
-  admin:      'admin@corekonstruct.com / admin123',
-  supervisor: 'supervisor@corekonstruct.com / super123',
-  client:     'client@corekonstruct.com / client123'
-};
-
-function updateDemoHint(role) {
-  if (demoHint) {
-    demoHint.innerHTML = `Demo: <strong>${hints[role]}</strong>`;
+  // Redirect already-logged-in users to their dashboard
+  if (Auth.isLoggedIn()) {
+    const user = Auth.getUser();
+    const redirects = {
+      admin:      '/dashboard-admin.html',
+      supervisor: '/dashboard-supervisor.html',
+      client:     '/dashboard-client.html'
+    };
+    window.location.href = redirects[user?.role] || '/dashboard-admin.html';
+    return;
   }
-}
 
-if (roleTabBtns.length) {
-  roleTabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      roleTabBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeRole = btn.dataset.role;
-      updateDemoHint(activeRole);
-      // Prefill email
-      const emailField = document.getElementById('login-email');
-      if (emailField) emailField.value = USERS[activeRole].email;
+  // ── Role Tab Switcher ──────────────────────────────────────────────────
+  const roleTabs  = document.querySelectorAll('.role-tab');
+  const demoHint  = document.getElementById('demo-hint');
+  let   activeRole = 'admin';
+
+  const demoCredentials = {
+    admin:      'admin@corekonstruct.com / Admin@1234',
+    supervisor: 'supervisor@corekonstruct.com / Admin@1234',
+    client:     'client@corekonstruct.com / Admin@1234'
+  };
+
+  roleTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      roleTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      activeRole = tab.dataset.role;
+      if (demoHint) {
+        demoHint.innerHTML = `Demo: <strong>${demoCredentials[activeRole]}</strong>`;
+      }
+      clearError();
     });
   });
-  updateDemoHint(activeRole);
-}
 
-// Toggle password visibility
-const pwToggle = document.getElementById('toggle-pw');
-const pwField  = document.getElementById('login-password');
-if (pwToggle && pwField) {
-  pwToggle.addEventListener('click', () => {
-    pwField.type = pwField.type === 'password' ? 'text' : 'password';
-    pwToggle.textContent = pwField.type === 'password' ? '👁' : '🙈';
-  });
-}
+  // ── Password Toggle ────────────────────────────────────────────────────
+  const togglePw   = document.getElementById('toggle-pw');
+  const pwInput    = document.getElementById('login-password');
 
-// Login submit
-if (loginForm) {
-  loginForm.addEventListener('submit', e => {
+  if (togglePw && pwInput) {
+    togglePw.addEventListener('click', () => {
+      const isText     = pwInput.type === 'text';
+      pwInput.type     = isText ? 'password' : 'text';
+      togglePw.textContent = isText ? '👁' : '🙈';
+    });
+  }
+
+  // ── Error Display ──────────────────────────────────────────────────────
+  const errorBox = document.getElementById('login-error');
+
+  function showError(msg) {
+    if (!errorBox) return;
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+  }
+
+  function clearError() {
+    if (!errorBox) return;
+    errorBox.textContent = '';
+    errorBox.style.display = 'none';
+  }
+
+  // ── Login Form Submit ──────────────────────────────────────────────────
+  const form       = document.getElementById('login-form');
+  const submitBtn  = document.getElementById('login-submit');
+
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('login-email').value.trim();
-    const pw    = document.getElementById('login-password').value;
-    const user  = USERS[activeRole];
+    clearError();
 
-    if (email === user.email && pw === user.password) {
-      // Save session
-      sessionStorage.setItem('ck_user', JSON.stringify({
-        name:     user.name,
-        role:     user.role,
-        roleKey:  activeRole,
-        initials: user.initials
-      }));
-      // Animate redirect
-      document.body.style.opacity = '0';
-      document.body.style.transition = 'opacity 0.4s';
-      setTimeout(() => { window.location.href = user.dashboard; }, 400);
-    } else {
-      loginError.classList.add('show');
-      loginError.textContent = '⚠ Invalid credentials. Please check email and password.';
-      setTimeout(() => loginError.classList.remove('show'), 4000);
+    const email    = document.getElementById('login-email')?.value.trim();
+    const password = document.getElementById('login-password')?.value;
+
+    if (!email || !password) {
+      return showError('Please enter your email and password.');
+    }
+
+    // Loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Signing in…</span>';
+
+    try {
+      const res  = await fetch(`${API_BASE}/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Login failed. Please try again.');
+        submitBtn.disabled   = false;
+        submitBtn.innerHTML  = '<span>Sign In</span><span>→</span>';
+        return;
+      }
+
+      // Store token & user, then redirect
+      Auth.setToken(data.token, data.user);
+
+      submitBtn.innerHTML = '<span>✓ Redirecting…</span>';
+      window.location.href = data.redirect || '/dashboard-admin.html';
+
+    } catch (err) {
+      console.error('Login error:', err);
+      showError('Network error. Make sure the server is running.');
+      submitBtn.disabled  = false;
+      submitBtn.innerHTML = '<span>Sign In</span><span>→</span>';
     }
   });
-}
 
-// ── Auth Guard (call on dashboard pages) ─────────────────────
-function authGuard(requiredRole) {
-  const raw = sessionStorage.getItem('ck_user');
-  if (!raw) {
-    window.location.href = 'login.html';
+});
+
+// ── Dashboard Guard (include this on every protected page) ──────────────────
+// Call Auth.requireAuth('admin') at the top of each dashboard's script.
+Auth.requireAuth = function(requiredRole) {
+  if (!this.isLoggedIn()) {
+    window.location.href = '/login.html';
     return null;
   }
-  const user = JSON.parse(raw);
-  if (requiredRole && user.roleKey !== requiredRole) {
-    window.location.href = 'login.html';
+  const user = this.getUser();
+  if (requiredRole && user?.role !== requiredRole) {
+    const redirects = {
+      admin:      '/dashboard-admin.html',
+      supervisor: '/dashboard-supervisor.html',
+      client:     '/dashboard-client.html'
+    };
+    window.location.href = redirects[user?.role] || '/login.html';
     return null;
   }
   return user;
-}
+};
 
-// ── Fill sidebar user info ─────────────────────────────────────
-function fillSidebarUser() {
-  const raw = sessionStorage.getItem('ck_user');
-  if (!raw) return;
-  const user = JSON.parse(raw);
-  const nameEl     = document.getElementById('sidebar-name');
-  const roleEl     = document.getElementById('sidebar-role');
-  const initEl     = document.getElementById('sidebar-initials');
-  const topbarName = document.getElementById('topbar-user');
-  if (nameEl)     nameEl.textContent = user.name;
-  if (roleEl)     roleEl.textContent = user.role;
-  if (initEl)     initEl.textContent = user.initials;
-  if (topbarName) topbarName.textContent = user.name;
-}
-
-// ── Logout ────────────────────────────────────────────────────
-function logout() {
-  sessionStorage.removeItem('ck_user');
-  document.body.style.opacity = '0';
-  document.body.style.transition = 'opacity 0.3s';
-  setTimeout(() => { window.location.href = 'login.html'; }, 300);
-}
-
-// ── Sidebar collapse toggle ────────────────────────────────────
-function initSidebar() {
-  const sidebar   = document.getElementById('sidebar');
-  const sidebarToggle = document.getElementById('sidebar-toggle');
-  const overlay   = document.getElementById('sidebar-overlay');
-  const mobileTrigger = document.getElementById('mobile-sidebar-trigger');
-
-  if (sidebarToggle && sidebar) {
-    sidebarToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-    });
-  }
-
-  // Mobile overlay
-  if (mobileTrigger && sidebar && overlay) {
-    mobileTrigger.addEventListener('click', () => {
-      sidebar.classList.toggle('mobile-open');
-      overlay.classList.toggle('show');
-    });
-    overlay.addEventListener('click', () => {
-      sidebar.classList.remove('mobile-open');
-      overlay.classList.remove('show');
-    });
-  }
-}
-
-// ── Active nav item ────────────────────────────────────────────
-function setActiveNav(id) {
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.nav === id);
-  });
-}
-
-// ── Expose globally ────────────────────────────────────────────
-window.authGuard      = authGuard;
-window.fillSidebarUser= fillSidebarUser;
-window.logout         = logout;
-window.initSidebar    = initSidebar;
-window.setActiveNav   = setActiveNav;
+// Export for use in other scripts
+window.Auth = Auth;
