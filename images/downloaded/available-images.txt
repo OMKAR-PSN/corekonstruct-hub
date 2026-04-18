@@ -1,0 +1,32 @@
+Download these available images into this folder:
+
+1) construction-team.jpg
+https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000&auto=format&fit=crop
+
+2) site-activity.jpg
+https://images.unsplash.com/photo-1531834685032-c34bf0d84c77?q=80&w=800
+
+3) bridge-project.jpg
+https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=600
+
+4) city-center.jpg
+https://images.unsplash.com/photo-1486325212027-8081e485255e?q=80&w=600
+
+5) highway-expansion.jpg
+https://images.unsplash.com/photo-1545558014-8692077e9b5c?q=80&w=600
+
+6) industrial-warehouse.jpg
+https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?q=80&w=800
+
+7) residential-block.jpg
+https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=500
+
+8) metro-access.jpg
+https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=500
+
+9) progress-capture.jpg
+https://images.unsplash.com/photo-1518563172008-e56c5dfbaef6?q=80&w=800
+
+Not available right now:
+- hero-main.jpg (image 1 from previous list)
+- structural-detail.jpg (image 10 from previous list)
