@@ -1,8 +1,28 @@
 "use client";
 
 import React, { useState } from "react";
-import { SupervisorProject, MaterialLog } from "@/lib/api/projects";
 import { Plus, Send } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Local types — replace deleted @/lib/api/projects imports.
+// Shapes are preserved so all downstream JSX compiles unchanged.
+// ---------------------------------------------------------------------------
+type SupervisorProject = {
+  id: string;
+  name: string;
+  stage: string;
+};
+
+type MaterialLog = {
+  id: string;
+  projectID: string;
+  materialName: string;
+  quantity: number;
+  unit: string;
+  status: "Requested" | "Approved" | "Delivered";
+  requestedBy: string;
+  requestedDate: string;
+};
 
 interface MaterialRequestFormProps {
   project: SupervisorProject;

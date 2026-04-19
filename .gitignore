@@ -1,8 +1,13 @@
 # Dependencies
 node_modules/
 
-# Environment secrets — NEVER commit this
+# Environment secrets — NEVER commit these
 .env
+.env.local
+.env*.local
+
+# Next.js build output
+.next/
 
 # Logs
 *.log

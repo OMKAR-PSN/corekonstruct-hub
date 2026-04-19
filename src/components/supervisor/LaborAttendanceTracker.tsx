@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, CircleSlash, Save } from "lucide-react";
 
 type Worker = {
-  id: number;
+  id: string;   // UUID — matches WorkerRow from @/types/supabase
   name: string;
   initials: string;
 };
@@ -15,7 +15,7 @@ type LaborAttendanceTrackerProps = {
 };
 
 export default function LaborAttendanceTracker({ workers }: LaborAttendanceTrackerProps) {
-  const [attendance, setAttendance] = useState<Record<number, "present" | "absent">>(() =>
+  const [attendance, setAttendance] = useState<Record<string, "present" | "absent">>(() =>
     Object.fromEntries(workers.map((worker) => [worker.id, "present"])),
   );
   const [savedMessage, setSavedMessage] = useState("Attendance not yet saved.");
@@ -26,7 +26,7 @@ export default function LaborAttendanceTracker({ workers }: LaborAttendanceTrack
     return { present, absent, total: workers.length };
   }, [attendance, workers.length]);
 
-  const toggleWorker = (workerId: number) => {
+  const toggleWorker = (workerId: string) => {
     setAttendance((current) => ({
       ...current,
       [workerId]: current[workerId] === "present" ? "absent" : "present",

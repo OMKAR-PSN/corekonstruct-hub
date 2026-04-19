@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Trash2 } from "lucide-react";
-import { getMaterialRequests, type MaterialRequest } from "../../lib/api/labor";
+
+// ---------------------------------------------------------------------------
+// Local type — mirrors the old lib/api/labor shape so all JSX stays intact.
+// Will be replaced with the Supabase `materials` row type in the next phase.
+// ---------------------------------------------------------------------------
+type MaterialRequest = {
+  id: number;
+  item: string;
+  quantity: number;
+  unit: string;
+  status: "Pending" | "Approved" | "Delivered";
+};
 
 export default function MaterialRequestList() {
   const [requests, setRequests] = useState<MaterialRequest[]>([]);
@@ -13,20 +24,10 @@ export default function MaterialRequestList() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    void getMaterialRequests().then((initialRequests) => {
-      if (!isMounted) {
-        return;
-      }
-
-      setRequests(initialRequests);
-      setIsLoading(false);
-    });
-
-    return () => {
-      isMounted = false;
-    };
+    // Stub: data will be fetched via a Server Action in the next phase.
+    // Start with an empty list so the component renders without a network call.
+    setRequests([]);
+    setIsLoading(false);
   }, []);
 
   const addRequest = (event: React.FormEvent) => {

@@ -1,42 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/utils/supabase/middleware";
 
-const protectedRoutes = ["/admin", "/supervisor", "/client"];
-
+/**
+ * Next.js Edge Middleware — Session refresh + route protection.
+ *
+ * Delegates all session handling to the Supabase SSR utility so that:
+ *  1. Expired access tokens are automatically refreshed on every request
+ *     (the refresh token is rotated and written back to cookies).
+ *  2. Unauthenticated visitors hitting /admin, /supervisor, or /client
+ *     are redirected to /login with a `?next=` param so we can return
+ *     them to their intended destination after login.
+ *
+ * Do NOT use `getSession()` here — it reads from the potentially-stale
+ * client cookie. `updateSession` calls `getUser()` which validates against
+ * the Supabase Auth server and is the only source of truth.
+ */
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (!protectedRoutes.some((route) => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-
-  const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "corekonstruct-demo-secret";
-  const token = await getToken({ req: request, secret });
-
-  if (!token) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  const routeToRole: Record<string, string> = {
-    "/admin": "admin",
-    "/supervisor": "supervisor",
-    "/client": "client",
-  };
-
-  const matchedRoute = protectedRoutes.find((route) => pathname.startsWith(route));
-  const requiredRole = matchedRoute ? routeToRole[matchedRoute] : null;
-  const tokenRole = token.role as string | undefined;
-  const dashboardRoute = token.dashboardRoute as string | undefined;
-
-  if (requiredRole && tokenRole && tokenRole !== requiredRole) {
-    return NextResponse.redirect(new URL(dashboardRoute ?? "/login", request.url));
-  }
-
-  return NextResponse.next();
+  return await updateSession(request);
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/supervisor/:path*", "/client/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/supervisor/:path*",
+    "/client/:path*",
+  ],
 };

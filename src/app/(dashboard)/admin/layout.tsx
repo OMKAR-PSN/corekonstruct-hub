@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
-import { BarChart3, BriefcaseBusiness, CircleDollarSign, LayoutDashboard, ScrollText, UserRound } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CircleDollarSign, LayoutDashboard, ScrollText, UserRound, Users } from "lucide-react";
 
 const navItems = [
   { label: "Overview", href: "/admin#overview", icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -8,6 +8,7 @@ const navItems = [
   { label: "Monitoring", href: "/admin#monitoring", icon: <BarChart3 className="h-4 w-4" /> },
   { label: "Finance", href: "/admin#finance", icon: <CircleDollarSign className="h-4 w-4" /> },
   { label: "Sanction", href: "/admin#sanction", icon: <ScrollText className="h-4 w-4" /> },
+  { label: "Team", href: "/admin/team", icon: <Users className="h-4 w-4" /> },
   { label: "Supervisor", href: "/supervisor", icon: <UserRound className="h-4 w-4" /> },
   { label: "Client", href: "/client", icon: <UserRound className="h-4 w-4" /> },
 ];

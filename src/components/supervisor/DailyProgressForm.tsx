@@ -1,54 +1,36 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, CloudSun, MessageSquareWarning, Send } from "lucide-react";
-import { getProgressSeed, type ProgressNote } from "../../lib/api/labor";
+
+type ProgressEntry = {
+  id: number;
+  date: string;
+  weather: string;
+  stage: string;
+  workDone: string;
+  issues: string;
+};
 
 type DailyProgressFormProps = {
   projectName: string;
 };
 
+const WEATHER_OPTIONS = ["Sunny", "Cloudy", "Rainy", "Windy", "Foggy"];
+const STAGE_OPTIONS = ["Brickwork", "Plastering", "Structure", "Finishing"];
+
 export default function DailyProgressForm({ projectName }: DailyProgressFormProps) {
-  const [date, setDate] = useState("");
-  const [weather, setWeather] = useState("");
-  const [stage, setStage] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0] ?? "");
+  const [weather, setWeather] = useState(WEATHER_OPTIONS[0] ?? "");
+  const [stage, setStage] = useState(STAGE_OPTIONS[0] ?? "");
   const [workDone, setWorkDone] = useState("");
   const [issues, setIssues] = useState("");
-  const [notes, setNotes] = useState<ProgressNote[]>([]);
-  const [weatherOptions, setWeatherOptions] = useState<string[]>([]);
-  const [stageOptions, setStageOptions] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    void getProgressSeed().then((seed) => {
-      if (!isMounted) {
-        return;
-      }
-
-      setWeatherOptions(seed.weatherOptions);
-      setStageOptions(seed.stageOptions);
-      setNotes(seed.notes);
-      setWeather(seed.weatherOptions[0] ?? "");
-      setStage(seed.stageOptions[0] ?? "");
-      setDate(new Date().toISOString().split("T")[0]);
-      setIsLoading(false);
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const [notes, setNotes] = useState<ProgressEntry[]>([]);
 
   const canSubmit = workDone.trim().length > 10;
 
   const latestSummary = useMemo(() => notes[0], [notes]);
-
-  if (isLoading) {
-    return <div className="h-[32rem] rounded-3xl border border-slate-200 bg-white animate-pulse" />;
-  }
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -109,7 +91,7 @@ export default function DailyProgressForm({ projectName }: DailyProgressFormProp
                 onChange={(event) => setWeather(event.target.value)}
                 className="w-full bg-transparent text-sm text-slate-900 outline-none"
               >
-                {weatherOptions.map((option) => (
+                {WEATHER_OPTIONS.map((option) => (
                   <option key={option} value={option} className="bg-white">
                     {option}
                   </option>
@@ -127,7 +109,7 @@ export default function DailyProgressForm({ projectName }: DailyProgressFormProp
                 onChange={(event) => setStage(event.target.value)}
                 className="w-full bg-transparent text-sm text-slate-900 outline-none"
               >
-                {stageOptions.map((option) => (
+                {STAGE_OPTIONS.map((option) => (
                   <option key={option} value={option} className="bg-white">
                     {option}
                   </option>

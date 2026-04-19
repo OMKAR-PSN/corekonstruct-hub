@@ -1,8 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { SupervisorProject, LaborLog } from "@/lib/api/projects";
 import { Users, Plus } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Local types — replace deleted @/lib/api/projects imports.
+// Shapes are preserved so all downstream JSX compiles unchanged.
+// ---------------------------------------------------------------------------
+type SupervisorProject = {
+  id: string;
+  name: string;
+  stage: string;
+};
+
+type LaborLog = {
+  id: string;
+  projectID: string;
+  contractorName: string;
+  headcount: number;
+  date: string;
+  stage: string;
+};
 
 interface LaborTrackerProps {
   project: SupervisorProject;

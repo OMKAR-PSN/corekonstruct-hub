@@ -1,13 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
-import { SupervisorProject } from "@/lib/api/projects";
 import { MapPin, Zap, CheckCircle2 } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Local type — replaces deleted @/lib/api/projects import.
+// ---------------------------------------------------------------------------
+type SupervisorProject = {
+  id: string;
+  name: string;
+  stage: string;
+  progress: number;
+  location?: string;
+  type?: string;
+};
+
 
 interface StageUpdaterProps {
   project: SupervisorProject;
-  onStageUpdate?: (projectId: number, newStage: string) => void;
-  onProgressUpdate?: (projectId: number, newProgress: number) => void;
+  onStageUpdate?: (projectId: string, newStage: string) => void;
+  onProgressUpdate?: (projectId: string, newProgress: number) => void;
 }
 
 const STAGE_PROGRESSION = [
