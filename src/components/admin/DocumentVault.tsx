@@ -1,7 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { Document, Project } from "@/lib/api/projects";
+
+export interface Project {
+  id: any;
+  name: string;
+  [key: string]: any;
+}
+
+export interface Document {
+  id: number;
+  projectID: any;
+  type: "Sanction Plan" | "Brochure" | "Invoice" | "Permit" | string;
+  name: string;
+  url: string;
+  uploadDate: string;
+}
 import { Upload, Download, Trash2, Plus, FileText } from "lucide-react";
 
 interface DocumentVaultProps {

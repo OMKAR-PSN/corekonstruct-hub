@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { Project, MaterialLog, LaborLog } from "@/lib/api/projects";
+export interface Project { [key: string]: any; }
+export interface MaterialLog { [key: string]: any; }
+export interface LaborLog { [key: string]: any; }
 import { Users, Package, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 
 interface ResourceOverviewProps {

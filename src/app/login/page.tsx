@@ -19,46 +19,45 @@ export default function LoginPage() {
       <section className="relative hidden lg:flex lg:w-1/2">
         {/* Background image */}
         <Image
-          src="https://images.unsplash.com/photo-1541888086425-d81bb19240f5?q=80&w=2000&auto=format&fit=crop"
-          alt="Modern construction site aerial view"
+          src="/images/login-bg.jpg"
+          alt="Construction blueprints with a laptop, hard hat, and clipboard"
           fill
           priority
-          unoptimized
           className="object-cover object-center"
         />
 
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-slate-900/50" />
+        {/* Dark overlay with premium gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/70 to-slate-900/20" />
 
         {/* Hero content */}
         <div className="relative z-10 flex w-full flex-col justify-end p-14 pb-16">
           {/* Brand badge */}
-          <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-orange-400/40 bg-orange-500/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-orange-300 backdrop-blur-sm">
+          <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md shadow-lg">
             <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
             CoreKonstruct Platform
           </div>
 
-          <h2 className="text-balance text-5xl font-extrabold leading-tight tracking-tight text-white">
+          <h2 className="text-balance text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow-xl">
             Operations Simplified.
             <br />
-            <span className="text-orange-400">Insight Amplified.</span>
+            <span className="text-orange-400 drop-shadow-lg">Insight Amplified.</span>
           </h2>
 
-          <p className="mt-5 max-w-sm text-base leading-relaxed text-slate-300">
+          <p className="mt-5 max-w-sm text-base leading-relaxed text-slate-200 drop-shadow-md">
             Manage your entire construction portfolio from one centralized
             command center.
           </p>
 
           {/* Subtle stat row */}
-          <div className="mt-10 flex gap-10 border-t border-white/10 pt-8">
+          <div className="mt-10 flex gap-10 border-t border-white/20 pt-8 drop-shadow-md">
             {[
               { label: "Active Projects", value: "2,400+" },
               { label: "Daily Reports", value: "18k" },
               { label: "Client Uptime", value: "99.9%" },
             ].map(({ label, value }) => (
               <div key={label}>
-                <p className="text-2xl font-bold text-white">{value}</p>
-                <p className="mt-0.5 text-xs text-slate-400">{label}</p>
+                <p className="text-2xl font-bold text-white drop-shadow-lg">{value}</p>
+                <p className="mt-0.5 text-xs text-slate-300 drop-shadow">{label}</p>
               </div>
             ))}
           </div>

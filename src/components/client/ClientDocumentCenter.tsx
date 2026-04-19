@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Document } from "@/lib/api/projects";
+export interface Document {
+  [key: string]: any;
+}
 import { Download, FileText, FolderOpen } from "lucide-react";
 
 interface ClientDocumentCenterProps {

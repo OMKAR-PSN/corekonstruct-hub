@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { SitePhoto } from "@/lib/api/projects";
+export interface SitePhoto {
+  [key: string]: any;
+}
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import Image from "next/image";
 

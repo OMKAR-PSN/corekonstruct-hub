@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { ClientProjectSummary } from "@/lib/api/projects";
+export interface ClientProjectSummary {
+  [key: string]: any;
+}
 import { MapPin, Calendar, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface ProjectStatusBoardProps {

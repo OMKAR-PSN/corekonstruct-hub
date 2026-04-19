@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { CompletedWork } from "@/lib/api/projects";
+export interface CompletedWork {
+  [key: string]: any;
+}
 import { Award, Clock, MapPin } from "lucide-react";
 import Image from "next/image";
 

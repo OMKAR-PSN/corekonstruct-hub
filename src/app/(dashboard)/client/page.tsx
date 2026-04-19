@@ -34,7 +34,8 @@ export default async function ClientPage() {
   }
 
   // Determine active project (the most recently active one, or first derived)
-  const activeProject = projects.length > 0 ? projects[0] : null;
+  const safeProjects = projects || [];
+  const activeProject = safeProjects.length > 0 ? safeProjects[0] : null;
 
   // 4. Mocks for deep child arrays pending full database normalization  
   // (Milestones, Photos, Costs, etc. will get their own tables in Phase 5+)
@@ -72,7 +73,7 @@ export default async function ClientPage() {
   return (
     <ClientDashboardClient
       activeProject={activeProject as Project | null}
-      projectSummary={projects as Project[]}
+      projectSummary={safeProjects as Project[]}
       milestoneTimeline={milestoneTimeline}
       sitePhotos={sitePhotos}
       completedWorks={completedWorks}

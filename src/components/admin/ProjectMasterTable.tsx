@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Project } from "@/lib/api/projects";
+export interface Project {
+  [key: string]: any;
+}
 import { ChevronDown, Edit2, FileText } from "lucide-react";
 
 interface ProjectMasterTableProps {
@@ -67,7 +69,7 @@ export function ProjectMasterTable({ projects, onStageChange }: ProjectMasterTab
               <td className="px-4 py-3">
                 {editingStage?.projectId === project.id ? (
                   <select
-                    value={editingStage.stage}
+                    value={editingStage?.stage}
                     onChange={(e) => {
                       const newStage = e.target.value as Project["currentStage"];
                       handleStageUpdate(project.id, newStage);

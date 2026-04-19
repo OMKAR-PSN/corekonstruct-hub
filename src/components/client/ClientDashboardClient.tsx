@@ -174,7 +174,7 @@ export default function ClientDashboardClient({
           <MilestoneTimeline milestones={milestoneTimeline} />
         </div>
         <div id="photos" className="scroll-mt-28">
-          <RecentSitePhotos photos={sitePhotos} />
+          <RecentSitePhotos photos={sitePhotos.map((p: any) => ({ src: p.url || "", caption: p.note || "" }))} />
         </div>
       </section>
 
