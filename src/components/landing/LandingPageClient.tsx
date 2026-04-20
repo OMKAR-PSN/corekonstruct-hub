@@ -61,32 +61,38 @@ const CAROUSEL_SLIDES: CarouselItem[] = [
   {
     id: 1,
     title: "Skyline Towers — High-Rise Development",
-    subtitle: "Mixed-Use · Toronto",
-    imageUrl: "/images/carousel/highrise-towers.jpg",
+    subtitle: "Mixed-Use · Structural",
+    imageUrl: "/images/carousel/slide-1.jpg",
   },
   {
     id: 2,
     title: "Smart Material Yard — Tagged Inventory",
     subtitle: "Logistics & Supply Chain",
-    imageUrl: "/images/carousel/material-yard.jpg",
+    imageUrl: "/images/carousel/slide-2.jpg",
   },
   {
     id: 3,
     title: "Project Phase 4 — Digital Blueprint Review",
     subtitle: "Planning & Collaboration",
-    imageUrl: "/images/carousel/blueprint-review.jpg",
+    imageUrl: "/images/carousel/slide-3.jpg",
   },
   {
     id: 4,
     title: "Core Foundation Plan — Design to Build",
     subtitle: "Structural Engineering",
-    imageUrl: "/images/carousel/foundation-plan.jpg",
+    imageUrl: "/images/carousel/slide-4.jpg",
   },
   {
     id: 5,
     title: "Bridge Infrastructure — Field Intelligence",
-    subtitle: "Civil Engineering · Site Operations",
-    imageUrl: "/images/carousel/site-engineer.jpg",
+    subtitle: "Civil Engineering · Site Ops",
+    imageUrl: "/images/carousel/slide-5.jpg",
+  },
+  {
+    id: 6,
+    title: "On-Site Command — Real-Time Oversight",
+    subtitle: "Project Management",
+    imageUrl: "/images/carousel/slide-6.jpg",
   },
 ];
 
