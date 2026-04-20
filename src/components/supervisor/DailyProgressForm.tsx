@@ -11,6 +11,8 @@ type ProgressEntry = {
   stage: string;
   workDone: string;
   issues: string;
+  expenses: number;
+  expenseDesc: string;
 };
 
 type DailyProgressFormProps = {
@@ -26,6 +28,8 @@ export default function DailyProgressForm({ projectName }: DailyProgressFormProp
   const [stage, setStage] = useState(STAGE_OPTIONS[0] ?? "");
   const [workDone, setWorkDone] = useState("");
   const [issues, setIssues] = useState("");
+  const [expenses, setExpenses] = useState<number | "">("");
+  const [expenseDesc, setExpenseDesc] = useState("");
   const [notes, setNotes] = useState<ProgressEntry[]>([]);
 
   const canSubmit = workDone.trim().length > 10;
@@ -44,12 +48,16 @@ export default function DailyProgressForm({ projectName }: DailyProgressFormProp
         stage,
         workDone: workDone.trim(),
         issues: issues.trim() || "No issues recorded.",
+        expenses: expenses === "" ? 0 : expenses,
+        expenseDesc: expenseDesc.trim(),
       },
       ...current,
     ]);
 
     setWorkDone("");
     setIssues("");
+    setExpenses("");
+    setExpenseDesc("");
   };
 
   return (
@@ -146,6 +154,34 @@ export default function DailyProgressForm({ projectName }: DailyProgressFormProp
           </label>
         </div>
 
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Daily Expenses (₹)</span>
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="font-semibold text-orange-600">₹</span>
+              <input
+                type="number"
+                value={expenses}
+                onChange={(event) => setExpenses(event.target.value === "" ? "" : Number(event.target.value))}
+                min="0"
+                placeholder="0"
+                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500"
+              />
+            </div>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Expense Description</span>
+            <input
+              type="text"
+              value={expenseDesc}
+              onChange={(event) => setExpenseDesc(event.target.value)}
+              placeholder="e.g. Fuel, minor repairs"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-500 focus:border-orange-300"
+            />
+          </label>
+        </div>
+
         <button
           type="submit"
           disabled={!canSubmit}
@@ -202,6 +238,11 @@ export default function DailyProgressForm({ projectName }: DailyProgressFormProp
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-300">{entry.workDone}</p>
               <p className="mt-2 text-xs leading-5 text-slate-400">Issues: {entry.issues}</p>
+              {entry.expenses > 0 && (
+                <p className="mt-1 text-xs leading-5 text-emerald-400">
+                  Expenses: ₹{entry.expenses} {entry.expenseDesc ? `(${entry.expenseDesc})` : ""}
+                </p>
+              )}
             </motion.article>
           ))}
         </motion.div>

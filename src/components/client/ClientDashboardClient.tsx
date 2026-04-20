@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Camera, CircleDollarSign, Eye, Gauge, TriangleAlert, Users } from "lucide-react";
+import { Camera, Eye, Gauge, TriangleAlert, Users } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
 import DataGrid from "@/components/admin/DataGrid";
-import BudgetBurnRate from "@/components/client/BudgetBurnRate";
 import MilestoneTimeline from "@/components/client/MilestoneTimeline";
 import RecentSitePhotos from "@/components/client/RecentSitePhotos";
 import type { Project, ClientStats } from "@/types/supabase";
@@ -20,7 +19,6 @@ type ClientMilestone = {
 };
 type SitePhoto = { id: string; url: string; note: string; date: string; stage: string };
 type CompletedWork = { title: string; year: string; note: string };
-type BudgetHistoryPoint = { month: string; amount: number };
 
 type Props = {
   activeProject: Project | null;
@@ -28,7 +26,6 @@ type Props = {
   milestoneTimeline: ClientMilestone[];
   sitePhotos: SitePhoto[];
   completedWorks: CompletedWork[];
-  budgetHistory: BudgetHistoryPoint[];
   stats: ClientStats;
   userName: string | null;
 };
@@ -39,7 +36,6 @@ export default function ClientDashboardClient({
   milestoneTimeline,
   sitePhotos,
   completedWorks,
-  budgetHistory,
   stats,
   userName,
 }: Props) {
@@ -124,14 +120,6 @@ export default function ClientDashboardClient({
               tone="orange"
             />
             <StatCard
-              title="Budget Burn Rate"
-              value={`₹${stats.burnRate.toLocaleString("en-IN")}`}
-              change="Average monthly utilisation"
-              helper="Rolling monthly spend."
-              icon={<CircleDollarSign className="h-5 w-5" />}
-              tone="success"
-            />
-            <StatCard
               title="Milestones Remaining"
               value={String(stats.milestonesRemaining)}
               change="Open items until handover"
@@ -165,9 +153,6 @@ export default function ClientDashboardClient({
       </section>
 
       {/* Placeholder sections for the hardcoded mock components we kept for UI visual parity */}
-      <section id="detail" className="scroll-mt-28">
-        <BudgetBurnRate budget={12000000} spent={3450000} history={budgetHistory} />
-      </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div id="completed" className="scroll-mt-28">
