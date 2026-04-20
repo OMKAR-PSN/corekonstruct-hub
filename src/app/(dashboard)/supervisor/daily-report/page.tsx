@@ -3,104 +3,94 @@
 /**
  * src/app/(dashboard)/supervisor/daily-report/page.tsx
  *
- * Supervisor Daily Report Form — Client Component.
+ * Faithful JSX conversion of the `<div id="sp-report">` panel from
+ * dashboard-supervisor.html.
  *
- * Data flow:
- *   1. On mount → fetch assigned projects via the Supabase browser client.
- *   2. Supervisor fills the form.
- *   3. On submit → calls the `submitDailyReport` Server Action.
- *      supervisor_id is injected server-side from auth.getUser(); the form
- *      never touches it directly.
+ * Styling:  Uses the existing dashboard CSS class names (dash-panel,
+ *           form-group, btn-primary, etc.) — these classes must be present
+ *           via the project's dashboard.css / globals.css.
+ * Icons:    Lucide React equivalents (already installed) used in place of
+ *           FontAwesome to keep the bundle lean in Next.js.
+ * Data:     Projects fetched client-side from Supabase on mount.
+ * Submit:   Direct Supabase browser-client INSERT (placeholder — wire the
+ *           `submitDailyReport` Server Action when ready).
  */
 
-import { useState, useEffect, useActionState, useRef } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import {
-  submitDailyReport,
-  type DailyReportState,
-} from "@/app/actions/daily-report";
-import Link from "next/link";
-import {
-  Cloud, Sun, CloudRain, Wind,
-  ClipboardList, AlertTriangle, IndianRupee,
-  ChevronLeft, CheckCircle2, Loader2,
+  FilePen, ChevronLeft, CheckCircle2,
+  TriangleAlert, Loader2, Camera,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Project = { id: string; name: string; current_stage: string | null };
 
+type FormState = {
+  projectId: string;
+  date: string;
+  weather: string;
+  stage: string;
+  workDone: string;
+  issues: string;
+  labourCost: string;
+  materialCost: string;
+  miscCost: string;
+  expenseDesc: string;
+};
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TODAY = new Date().toISOString().split("T")[0];
 
+const BLANK: FormState = {
+  projectId:    "",
+  date:         TODAY,
+  weather:      "",
+  stage:        "brickwork",
+  workDone:     "",
+  issues:       "",
+  labourCost:   "0",
+  materialCost: "0",
+  miscCost:     "0",
+  expenseDesc:  "",
+};
+
 const WEATHER_OPTIONS = [
-  { value: "Sunny",   label: "Sunny",   Icon: Sun,        color: "text-amber-400"   },
-  { value: "Cloudy",  label: "Cloudy",  Icon: Cloud,      color: "text-slate-400"   },
-  { value: "Rainy",   label: "Rainy",   Icon: CloudRain,  color: "text-blue-400"    },
-  { value: "Extreme", label: "Extreme", Icon: Wind,       color: "text-red-400"     },
-] as const;
+  { value: "sunny",  label: "Sunny"  },
+  { value: "cloudy", label: "Cloudy" },
+  { value: "rainy",  label: "Rainy"  },
+  { value: "windy",  label: "Windy"  },
+  { value: "foggy",  label: "Foggy"  },
+];
 
-type WeatherValue = typeof WEATHER_OPTIONS[number]["value"];
-
-const INITIAL_STATE: DailyReportState = { success: false };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatINR(n: number): string {
-  if (isNaN(n) || n === 0) return "₹0";
-  if (n >= 100_000) return `₹${(n / 100_000).toFixed(1)} L`;
-  return `₹${n.toLocaleString("en-IN")}`;
-}
-
-// ─── Small sub-components ─────────────────────────────────────────────────────
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return (
-    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-400">
-      <AlertTriangle className="h-3 w-3 shrink-0" />
-      {msg}
-    </p>
-  );
-}
-
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-700 bg-slate-800 p-5 shadow-md">
-      <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">
-        {title}
-      </h2>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
-
-const inputCls =
-  "w-full rounded-xl border border-slate-600 bg-slate-700 px-4 py-3.5 " +
-  "text-base text-slate-100 placeholder:text-slate-500 " +
-  "focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/30 " +
-  "disabled:opacity-50 transition-colors";
-
-const labelCls = "mb-1.5 block text-sm font-semibold text-slate-300";
+const STAGE_OPTIONS = [
+  { value: "foundation", label: "Foundation" },
+  { value: "structure",  label: "Structure"  },
+  { value: "brickwork",  label: "Brickwork"  },
+  { value: "plastering", label: "Plastering" },
+  { value: "finishing",  label: "Finishing"  },
+  { value: "earthwork",  label: "Earthwork"  },
+  { value: "sub-base",   label: "Sub-base"   },
+  { value: "surfacing",  label: "Surfacing"  },
+  { value: "piling",     label: "Piling"     },
+  { value: "deck-slab",  label: "Deck Slab"  },
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE COMPONENT
+// PAGE COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function DailyReportPage() {
-  // ── Projects list (fetched on mount via browser client) ──────────────────
-  const [projects, setProjects]       = useState<Project[]>([]);
+
+  // ── Projects list ─────────────────────────────────────────────────────────
+  const [projects, setProjects]             = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
 
   useEffect(() => {
-    async function loadProjects() {
+    (async () => {
       const supabase = createClient();
       const { data } = await supabase
         .from("projects")
@@ -108,371 +98,399 @@ export default function DailyReportPage() {
         .order("created_at", { ascending: false });
       setProjects((data ?? []) as Project[]);
       setLoadingProjects(false);
-    }
-    loadProjects();
+    })();
   }, []);
 
-  // ── Form state (controlled) ───────────────────────────────────────────────
-  const [projectId, setProjectId]   = useState("");
-  const [reportDate, setReportDate] = useState(TODAY);
-  const [weather, setWeather]       = useState<WeatherValue>("Sunny");
-  const [workDone, setWorkDone]     = useState("");
-  const [issues, setIssues]         = useState("");
-  const [labour, setLabour]         = useState("");
-  const [material, setMaterial]     = useState("");
-  const [misc, setMisc]             = useState("");
+  // ── Controlled form state ─────────────────────────────────────────────────
+  const [form, setForm] = useState<FormState>(BLANK);
 
-  // Running total (live preview)
-  const total =
-    (parseFloat(labour   || "0") || 0) +
-    (parseFloat(material || "0") || 0) +
-    (parseFloat(misc     || "0") || 0);
+  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm(prev => ({ ...prev, [key]: value }));
+  }
 
-  // ── Server Action wired to useActionState ─────────────────────────────────
-  const [state, action, isPending] = useActionState(
-    submitDailyReport,
-    INITIAL_STATE,
-  );
+  // ── Submission state ──────────────────────────────────────────────────────
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess,    setIsSuccess]    = useState(false);
+  const [errorMsg,     setErrorMsg]     = useState<string | null>(null);
 
-  // Reset form after success
-  const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    if (state.success) {
-      formRef.current?.reset();
-      setProjectId(""); setReportDate(TODAY); setWeather("Sunny");
-      setWorkDone(""); setIssues("");
-      setLabour(""); setMaterial(""); setMisc("");
+  // ── Submit handler ────────────────────────────────────────────────────────
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    setIsSuccess(false);
+
+    /* ── Placeholder INSERT — replace with Server Action when ready ───────
+     *
+     * import { submitDailyReport } from "@/app/actions/daily-report";
+     * const result = await submitDailyReport(undefined, formData);
+     *
+     * For now we do a direct client-side insert so the form is fully
+     * testable without any further server-action wiring.
+     * ──────────────────────────────────────────────────────────────────── */
+    try {
+      const supabase = createClient();
+
+      // Resolve the authenticated user's ID for supervisor_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Session expired — please log in again.");
+
+      const { error: dbError } = await supabase.from("daily_reports").insert({
+        project_id:       form.projectId || null,
+        supervisor_id:    user.id,
+        report_date:      form.date,
+        weather:          form.weather   || "sunny",
+        current_stage:    form.stage,
+        work_done:        form.workDone,
+        issues:           form.issues    || null,
+        labour_expense:   parseFloat(form.labourCost)   || 0,
+        material_expense: parseFloat(form.materialCost) || 0,
+        misc_expense:     parseFloat(form.miscCost)     || 0,
+        expense_desc:     form.expenseDesc              || null,
+      });
+
+      if (dbError) throw new Error(dbError.message);
+
+      // ── Success ──────────────────────────────────────────────────────────
+      setIsSuccess(true);
+      setForm(BLANK);
+
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Submission failed. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [state.success]);
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100">
-      <div className="mx-auto max-w-2xl px-4 pb-16 pt-6">
+    <div className="dash-content" style={{ maxWidth: "860px", margin: "0 auto", padding: "24px 16px" }}>
 
-        {/* ── Breadcrumb nav ───────────────────────────────────────────── */}
-        <Link
-          href="/supervisor"
-          className="mb-6 flex items-center gap-1.5 text-sm text-slate-400 hover:text-orange-400 transition-colors"
+      {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
+      <Link
+        href="/supervisor"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          fontSize: "0.85rem",
+          color: "var(--text-muted)",
+          marginBottom: "20px",
+          textDecoration: "none",
+        }}
+      >
+        <ChevronLeft size={15} />
+        Back to Dashboard
+      </Link>
+
+      {/* ── Success banner ───────────────────────────────────────────────── */}
+      {isSuccess && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            background: "rgba(34,197,94,0.1)",
+            border: "1.5px solid rgba(34,197,94,0.35)",
+            borderRadius: "var(--radius-md, 12px)",
+            padding: "16px 20px",
+            marginBottom: "20px",
+          }}
         >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Link>
-
-        {/* ── Page title ───────────────────────────────────────────────── */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-500/20">
-              <ClipboardList className="h-5 w-5 text-orange-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-white">
-                Daily Site Report
-              </h1>
-              <p className="text-xs text-slate-400">
-                Submit your end-of-day field log
-              </p>
-            </div>
+          <CheckCircle2 size={20} color="#22c55e" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <strong style={{ color: "#22c55e" }}>Report submitted successfully!</strong>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
+              Your daily site report and expenses have been saved to the database.
+            </p>
           </div>
         </div>
+      )}
 
-        {/* ── Success banner ────────────────────────────────────────────── */}
-        {state.success && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
-            <div>
-              <p className="font-bold text-emerald-300">Report submitted!</p>
-              <p className="mt-0.5 text-sm text-emerald-400">
-                Your daily log has been saved to the database. The admin can
-                view it in the Reports panel.
-              </p>
-            </div>
-          </div>
-        )}
+      {/* ── Error banner ─────────────────────────────────────────────────── */}
+      {errorMsg && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            background: "rgba(239,68,68,0.08)",
+            border: "1.5px solid rgba(239,68,68,0.3)",
+            borderRadius: "var(--radius-md, 12px)",
+            padding: "16px 20px",
+            marginBottom: "20px",
+          }}
+        >
+          <TriangleAlert size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: 2 }} />
+          <p style={{ fontSize: "0.88rem", color: "var(--text-dark)" }}>{errorMsg}</p>
+        </div>
+      )}
 
-        {/* ── Global error banner ───────────────────────────────────────── */}
-        {state.error && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-5">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-            <p className="text-sm text-red-300">{state.error}</p>
-          </div>
-        )}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* DAILY REPORT PANEL                                               */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <div className="dash-panel">
 
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/*  FORM                                                          */}
-        {/* ══════════════════════════════════════════════════════════════ */}
-        <form ref={formRef} action={action} className="space-y-5" noValidate>
+        {/* Header ───────────────────────────────────────────────────────── */}
+        <div className="dash-panel-header">
+          <h3>
+            <FilePen size={17} style={{ verticalAlign: "middle", marginRight: "8px" }} />
+            Daily Site Report
+          </h3>
+          <span className="badge badge-orange">Mandatory</span>
+        </div>
 
-          {/* ── Section 1: Report Details ──────────────────────────────── */}
-          <SectionCard title="Report Details">
+        <div className="dash-panel-body">
+          <form id="daily-report-form" onSubmit={handleSubmit} noValidate>
 
-            {/* Project */}
-            <div>
-              <label htmlFor="projectId" className={labelCls}>
-                Project <span className="text-orange-400">*</span>
-              </label>
+            {/* ── Project Selection (added per requirement) ─────────────── */}
+            <div className="form-group">
+              <label htmlFor="report-project">Select Project *</label>
               {loadingProjects ? (
-                <div className="flex h-14 items-center gap-2 rounded-xl border border-slate-600 bg-slate-700 px-4 text-sm text-slate-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div style={{ padding: "11px 14px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm, 8px)", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
                   Loading projects…
                 </div>
               ) : (
                 <select
-                  id="projectId"
+                  id="report-project"
                   name="projectId"
-                  required
-                  value={projectId}
-                  onChange={e => setProjectId(e.target.value)}
-                  disabled={isPending}
-                  className={`${inputCls} appearance-none`}
+                  value={form.projectId}
+                  onChange={e => setField("projectId", e.target.value)}
+                  disabled={isSubmitting}
                   suppressHydrationWarning
                 >
                   <option value="">— Select a project —</option>
                   {projects.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name}{p.current_stage ? ` (${p.current_stage})` : ""}
+                      {p.name}{p.current_stage ? ` · ${p.current_stage}` : ""}
                     </option>
                   ))}
                 </select>
               )}
-              <FieldError msg={state.fieldErrors?.projectId} />
             </div>
 
-            {/* Report Date */}
-            <div>
-              <label htmlFor="reportDate" className={labelCls}>
-                Report Date <span className="text-orange-400">*</span>
-              </label>
-              <input
-                id="reportDate"
-                name="reportDate"
-                type="date"
-                required
-                max={TODAY}
-                value={reportDate}
-                onChange={e => setReportDate(e.target.value)}
-                disabled={isPending}
-                className={inputCls}
-                suppressHydrationWarning
-              />
-              <FieldError msg={state.fieldErrors?.reportDate} />
-            </div>
+            {/* ── Row 1: Date / Weather / Stage ─────────────────────────── */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
 
-            {/* Weather — visual pill selector */}
-            <div>
-              <label className={labelCls}>
-                Weather Condition <span className="text-orange-400">*</span>
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {WEATHER_OPTIONS.map(({ value, label, Icon, color }) => (
-                  <label
-                    key={value}
-                    className={[
-                      "flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all",
-                      weather === value
-                        ? "border-orange-500 bg-orange-500/10"
-                        : "border-slate-600 bg-slate-700 hover:border-slate-500",
-                      isPending ? "pointer-events-none opacity-50" : "",
-                    ].join(" ")}
-                  >
-                    <input
-                      type="radio"
-                      name="weather"
-                      value={value}
-                      checked={weather === value}
-                      onChange={() => setWeather(value)}
-                      className="sr-only"
-                    />
-                    <Icon className={`h-5 w-5 ${weather === value ? "text-orange-400" : color}`} />
-                    <span className={`text-[11px] font-semibold ${weather === value ? "text-orange-300" : "text-slate-400"}`}>
-                      {label}
-                    </span>
-                  </label>
-                ))}
+              <div className="form-group">
+                <label htmlFor="report-date">Date *</label>
+                <input
+                  type="date"
+                  id="report-date"
+                  name="date"
+                  required
+                  max={TODAY}
+                  value={form.date}
+                  onChange={e => setField("date", e.target.value)}
+                  disabled={isSubmitting}
+                  suppressHydrationWarning
+                />
               </div>
-              <FieldError msg={state.fieldErrors?.weather} />
+
+              <div className="form-group">
+                <label htmlFor="report-weather">Weather *</label>
+                <select
+                  id="report-weather"
+                  name="weather"
+                  required
+                  value={form.weather}
+                  onChange={e => setField("weather", e.target.value)}
+                  disabled={isSubmitting}
+                  suppressHydrationWarning
+                >
+                  <option value="">Select weather</option>
+                  {WEATHER_OPTIONS.map(w => (
+                    <option key={w.value} value={w.value}>{w.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="report-stage">Current Stage *</label>
+                <select
+                  id="report-stage"
+                  name="stage"
+                  required
+                  value={form.stage}
+                  onChange={e => setField("stage", e.target.value)}
+                  disabled={isSubmitting}
+                  suppressHydrationWarning
+                >
+                  {STAGE_OPTIONS.map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </SectionCard>
 
-          {/* ── Section 2: Site Diary ──────────────────────────────────── */}
-          <SectionCard title="Site Diary">
-
-            {/* Work Done */}
-            <div>
-              <label htmlFor="workDone" className={labelCls}>
-                Work Done Today <span className="text-orange-400">*</span>
-              </label>
+            {/* ── Work Done ─────────────────────────────────────────────── */}
+            <div className="form-group">
+              <label htmlFor="report-work">Work Done Today *</label>
               <textarea
-                id="workDone"
-                name="workDone"
-                rows={4}
-                required
-                placeholder="Describe the work completed on site today…"
-                value={workDone}
-                onChange={e => setWorkDone(e.target.value)}
-                disabled={isPending}
-                className={`${inputCls} resize-none leading-relaxed`}
-                suppressHydrationWarning
-              />
-              <FieldError msg={state.fieldErrors?.workDone} />
-            </div>
-
-            {/* Issues / Blockers */}
-            <div>
-              <label htmlFor="issues" className={labelCls}>
-                Issues / Blockers
-                <span className="ml-1.5 text-[10px] font-normal text-slate-500">
-                  (optional)
-                </span>
-              </label>
-              <textarea
-                id="issues"
-                name="issues"
+                id="report-work"
+                name="work_done"
                 rows={3}
-                placeholder="Any delays, safety incidents, supply issues…"
-                value={issues}
-                onChange={e => setIssues(e.target.value)}
-                disabled={isPending}
-                className={`${inputCls} resize-none leading-relaxed`}
+                placeholder="Describe construction work completed today..."
+                required
+                value={form.workDone}
+                onChange={e => setField("workDone", e.target.value)}
+                disabled={isSubmitting}
                 suppressHydrationWarning
               />
             </div>
-          </SectionCard>
 
-          {/* ── Section 3: Daily Expenses ──────────────────────────────── */}
-          <SectionCard title="Daily Expenses (₹)">
+            {/* ── Issues / Problems ─────────────────────────────────────── */}
+            <div className="form-group">
+              <label htmlFor="report-issues">Issues / Problems</label>
+              <textarea
+                id="report-issues"
+                name="issues"
+                rows={2}
+                placeholder="Note any issues, delays, or safety concerns..."
+                value={form.issues}
+                onChange={e => setField("issues", e.target.value)}
+                disabled={isSubmitting}
+                suppressHydrationWarning
+              />
+            </div>
 
-            {/* Three expense inputs in a responsive grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* ════════════════════════════════════════════════════════════
+                EXPENSE SECTION
+                ════════════════════════════════════════════════════════════ */}
+            <div
+              style={{
+                background: "rgba(59,130,246,0.06)",
+                border: "1.5px solid rgba(59,130,246,0.15)",
+                borderRadius: "var(--radius-md, 12px)",
+                padding: "20px",
+                marginBottom: "20px",
+              }}
+            >
+              <h4 style={{ fontSize: "0.95rem", marginBottom: "8px", color: "var(--text-dark)" }}>
+                💰 Today&apos;s Expenses
+              </h4>
+              <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "16px" }}>
+                Enter the expenses incurred today. These will be added to the
+                project&apos;s finance tracker on the admin dashboard.
+              </p>
 
-              {/* Labour */}
-              <div>
-                <label htmlFor="labourExpense" className={labelCls}>
-                  Labour
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <IndianRupee className="h-4 w-4" />
-                  </span>
+              {/* Labour / Material / Misc — 3 column grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label htmlFor="expense-labour">Labour Cost (₹)</label>
                   <input
-                    id="labourExpense"
-                    name="labourExpense"
                     type="number"
+                    id="expense-labour"
+                    name="labourCost"
+                    placeholder="e.g. 15000"
                     min="0"
-                    step="1"
-                    placeholder="0"
-                    value={labour}
-                    onChange={e => setLabour(e.target.value)}
-                    disabled={isPending}
-                    className={`${inputCls} pl-9`}
+                    step="100"
+                    value={form.labourCost}
+                    onChange={e => setField("labourCost", e.target.value)}
+                    disabled={isSubmitting}
                     suppressHydrationWarning
                   />
                 </div>
-                <FieldError msg={state.fieldErrors?.labourExpense} />
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label htmlFor="expense-material">Material Cost (₹)</label>
+                  <input
+                    type="number"
+                    id="expense-material"
+                    name="materialCost"
+                    placeholder="e.g. 25000"
+                    min="0"
+                    step="100"
+                    value={form.materialCost}
+                    onChange={e => setField("materialCost", e.target.value)}
+                    disabled={isSubmitting}
+                    suppressHydrationWarning
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label htmlFor="expense-misc">Misc / Other (₹)</label>
+                  <input
+                    type="number"
+                    id="expense-misc"
+                    name="miscCost"
+                    placeholder="e.g. 5000"
+                    min="0"
+                    step="100"
+                    value={form.miscCost}
+                    onChange={e => setField("miscCost", e.target.value)}
+                    disabled={isSubmitting}
+                    suppressHydrationWarning
+                  />
+                </div>
               </div>
 
-              {/* Material */}
-              <div>
-                <label htmlFor="materialExpense" className={labelCls}>
-                  Material
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <IndianRupee className="h-4 w-4" />
-                  </span>
-                  <input
-                    id="materialExpense"
-                    name="materialExpense"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value={material}
-                    onChange={e => setMaterial(e.target.value)}
-                    disabled={isPending}
-                    className={`${inputCls} pl-9`}
-                    suppressHydrationWarning
-                  />
-                </div>
-                <FieldError msg={state.fieldErrors?.materialExpense} />
-              </div>
-
-              {/* Misc */}
-              <div>
-                <label htmlFor="miscExpense" className={labelCls}>
-                  Misc
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <IndianRupee className="h-4 w-4" />
-                  </span>
-                  <input
-                    id="miscExpense"
-                    name="miscExpense"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value={misc}
-                    onChange={e => setMisc(e.target.value)}
-                    disabled={isPending}
-                    className={`${inputCls} pl-9`}
-                    suppressHydrationWarning
-                  />
-                </div>
-                <FieldError msg={state.fieldErrors?.miscExpense} />
+              {/* Expense Description */}
+              <div className="form-group" style={{ marginTop: "12px", marginBottom: 0 }}>
+                <label htmlFor="expense-desc">Expense Description</label>
+                <input
+                  type="text"
+                  id="expense-desc"
+                  name="expenseDesc"
+                  placeholder="e.g. Paid 10 masons for brickwork + cement delivery"
+                  value={form.expenseDesc}
+                  onChange={e => setField("expenseDesc", e.target.value)}
+                  disabled={isSubmitting}
+                  suppressHydrationWarning
+                />
               </div>
             </div>
 
-            {/* Running total */}
-            <div className="flex items-center justify-between rounded-xl border border-slate-600/60 bg-slate-700/50 px-4 py-3">
-              <span className="text-sm font-semibold text-slate-400">
-                Total Daily Expense
-              </span>
-              <span className={`text-lg font-extrabold tracking-tight ${total > 0 ? "text-orange-400" : "text-slate-500"}`}>
-                {formatINR(total)}
+            {/* ── Site photos reminder banner ───────────────────────────── */}
+            <div
+              style={{
+                background: "rgba(249,115,22,0.06)",
+                border: "1.5px solid rgba(249,115,22,0.2)",
+                borderRadius: "var(--radius-md, 12px)",
+                padding: "14px 18px",
+                marginBottom: "20px",
+                fontSize: "0.88rem",
+                color: "var(--text-mid)",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <Camera size={16} color="var(--orange, #f97316)" style={{ flexShrink: 0 }} />
+              <span>
+                <strong style={{ color: "var(--orange, #f97316)" }}>Site photos are mandatory</strong>
+                {" "}before submitting. Go to{" "}
+                <Link href="/supervisor" style={{ color: "var(--orange, #f97316)", fontWeight: 600 }}>Site Photos</Link>
+                {" "}and upload at least one.
               </span>
             </div>
-          </SectionCard>
 
-          {/* ── Submit button ─────────────────────────────────────────── */}
-          <button
-            type="submit"
-            disabled={isPending || loadingProjects}
-            suppressHydrationWarning
-            className="
-              flex w-full items-center justify-center gap-2.5 rounded-2xl
-              bg-orange-500 px-6 py-4 text-base font-bold text-white shadow-lg
-              shadow-orange-500/25 transition-all
-              hover:bg-orange-600 hover:shadow-orange-500/40
-              active:scale-[0.98]
-              disabled:cursor-not-allowed disabled:opacity-60
-              focus:outline-none focus:ring-4 focus:ring-orange-500/40
-            "
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Submitting Report…
-              </>
-            ) : (
-              <>
-                <ClipboardList className="h-5 w-5" />
-                Submit Daily Report
-              </>
-            )}
-          </button>
+            {/* ── Submit button ─────────────────────────────────────────── */}
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+              suppressHydrationWarning
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                  Submitting…
+                </>
+              ) : (
+                "Submit Daily Report & Expenses ✓"
+              )}
+            </button>
 
-          {/* Small helper text */}
-          <p className="text-center text-xs text-slate-500">
-            Your supervisor ID is automatically attached on the server.
-            Reports are saved to Supabase and visible to admins.
-          </p>
-
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
