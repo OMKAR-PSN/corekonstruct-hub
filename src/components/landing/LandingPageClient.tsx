@@ -17,6 +17,7 @@
 
 import { useEffect, useActionState, useRef } from "react";
 import Link from "next/link";
+import CenterFocusCarousel, { CarouselItem } from "@/components/ui/CenterFocusCarousel";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
 
 // ─── Data ──────────────────────────────────────────────────────────────────
@@ -54,6 +55,40 @@ const FAQS = [
 ] as const;
 
 const CHAR_LIMIT = 500;
+
+// ─── Carousel slides ─────────────────────────────────────────────────────────
+const CAROUSEL_SLIDES: CarouselItem[] = [
+  {
+    id: 1,
+    title: "Skyline Towers — High-Rise Development",
+    subtitle: "Mixed-Use · Toronto",
+    imageUrl: "/images/carousel/highrise-towers.jpg",
+  },
+  {
+    id: 2,
+    title: "Smart Material Yard — Tagged Inventory",
+    subtitle: "Logistics & Supply Chain",
+    imageUrl: "/images/carousel/material-yard.jpg",
+  },
+  {
+    id: 3,
+    title: "Project Phase 4 — Digital Blueprint Review",
+    subtitle: "Planning & Collaboration",
+    imageUrl: "/images/carousel/blueprint-review.jpg",
+  },
+  {
+    id: 4,
+    title: "Core Foundation Plan — Design to Build",
+    subtitle: "Structural Engineering",
+    imageUrl: "/images/carousel/foundation-plan.jpg",
+  },
+  {
+    id: 5,
+    title: "Bridge Infrastructure — Field Intelligence",
+    subtitle: "Civil Engineering · Site Operations",
+    imageUrl: "/images/carousel/site-engineer.jpg",
+  },
+];
 
 // ─── Initial form state ─────────────────────────────────────────────────────
 const INITIAL_STATE: ContactFormState = { success: false };
@@ -320,6 +355,21 @@ export default function LandingPageClient() {
             </div>
           ))}
         </div>
+      </section>
+
+      <div className="lw-divider" />
+
+      {/* ══════════════════════════════════════════════════════════════════
+          PROJECT SHOWCASE — CenterFocusCarousel
+          ══════════════════════════════════════════════════════════════════ */}
+      <section id="showcase" className="lw-section">
+        <div className="lw-section-label">Project Showcase</div>
+        <h2 className="lw-section-title">Our work, up close.</h2>
+        <p className="lw-section-sub">
+          From towering high-rises to precision foundation engineering — every project
+          powered by CoreKonstruct&apos;s centralized intelligence layer.
+        </p>
+        <CenterFocusCarousel items={CAROUSEL_SLIDES} autoPlayInterval={4500} />
       </section>
 
       <div className="lw-divider" />
