@@ -115,14 +115,7 @@ UPDATE public.profiles SET role = 'admin' WHERE id = 'your-user-uuid';
 
 ## 📸 Screenshots
 
-| Screen | Preview |
-|---|---|
-| Landing Page | *(screenshot)* |
-| Admin Dashboard | *(screenshot)* |
-| Supervisor Photo Upload | *(screenshot)* |
-| Client Project Portal | *(screenshot)* |
-| Login (Google + Email) | *(screenshot)* |
-| Sanction Plan Viewer | *(screenshot)* |
+Shortly adding...
 
 ---
 
@@ -142,7 +135,7 @@ UPDATE public.profiles SET role = 'admin' WHERE id = 'your-user-uuid';
 | Name | Role | GitHub |
 |---|---|---|
 | Omkar | Full-Stack Developer | [@OMKAR-PSN](https://github.com/OMKAR-PSN) |
-| *(teammate)* | *(role)* | *(link)* |
+| *Bhakti* | *Frontned Developer* |  |
 
 ---
 
